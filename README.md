@@ -66,8 +66,7 @@
 - `npm run preview`: Preview production build
 - `npm run lint`: Run ESLint
 
-## 🌐 [Live Demo]
-![QR-Gen](https://qr-gen-eosin-rho.vercel.app/)
+## 🌐 [Live Demo](https://qr-gen-eosin-rho.vercel.app/)
 Try QR-Gen live and experience all features firsthand!
 
 ## 🤝 Contributing
