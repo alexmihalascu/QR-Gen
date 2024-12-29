@@ -18,59 +18,10 @@ export default defineConfig({
       deleteOriginalAssets: false
     }),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       injectRegister: 'auto',
       strategies: 'generateSW',
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        cleanupOutdatedCaches: true,
-        skipWaiting: true,
-        clientsClaim: true,
-        navigateFallback: '/offline.html', // Changed from offlineFallback
-        navigateFallbackAllowlist: [/^(?!\/__).*/], // Add allowlist for navigation fallback
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'google-fonts',
-              expiration: {
-                maxEntries: 4,
-                maxAgeSeconds: 7 * 24 * 60 * 60
-              }
-            }
-          },
-          {
-            urlPattern: /\.(?:png|jpg|jpeg|svg|ico)$/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'images',
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 30 * 24 * 60 * 60
-              }
-            }
-          },
-          {
-            urlPattern: /^https:\/\/api\./i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'api-cache',
-              networkTimeoutSeconds: 5,
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 // 1 hour
-              },
-              backgroundSync: {
-                name: 'apiQueue',
-                options: {
-                  maxRetentionTime: 24 * 60 // Retry for up to 24 hours
-                }
-              }
-            }
-          }
-        ]
-      },
+      includeAssets: ['**/*'],
       manifest: {
         name: 'QR Code Generator',
         short_name: 'QR Gen',
@@ -82,26 +33,76 @@ export default defineConfig({
         categories: ['productivity', 'utilities'],
         icons: [
           {
-            src: 'assets/favicon-32x32.png',
+            src: '/assets/favicon-32x32.png',
             sizes: '32x32',
             type: 'image/png'
           },
           {
-            src: 'assets/android-chrome-192x192.png',
+            src: '/assets/android-chrome-192x192.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any maskable'
           },
           {
-            src: 'assets/android-chrome-512x512.png',
+            src: '/assets/android-chrome-512x512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable'
           }
         ],
-        start_url: '/',
-        scope: '/',
+        start_url: 'https://qr-gen-eosin-rho.vercel.app/',
+        scope: 'https://qr-gen-eosin-rho.vercel.app/',
+        id: 'qr-gen',
         prefer_related_applications: false
+      },
+      workbox: {
+        globPatterns: [
+          '**/*.{js,css,html,ico,png,svg,woff2,jpg,jpeg,json,txt}'
+        ],
+        navigateFallback: '/index.html',
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }) => url.pathname.startsWith('/'),
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'app-shell',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 * 24 * 7 // 1 week
+              }
+            }
+          },
+          {
+            urlPattern: /\.(?:png|jpg|jpeg|svg|gif|ico)$/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'images',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
+              }
+            }
+          },
+          {
+            urlPattern: /^https:\/\/fonts\.(?:googleapis|gstatic)\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'google-fonts',
+              expiration: {
+                maxEntries: 4,
+                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
+              }
+            }
+          }
+        ],
+        cleanupOutdatedCaches: true,
+        skipWaiting: true,
+        clientsClaim: true,
+        sourcemap: false
+      },
+      devOptions: {
+        enabled: true,
+        type: 'module'
       }
     })
   ],
@@ -160,5 +161,35 @@ export default defineConfig({
     open: true,
     host: true,
     cors: true
+  },
+
+  preview: {
+    port: 3000,
+    strictPort: true,
+    host: true,
+    cors: true
+  },
+
+  resolve: {
+    extensions: ['.js', '.jsx', '.json'],
+    alias: {
+      '@': '/src'
+    }
+  },
+
+  esbuild: {
+    // jsxInject: `import React from 'react'`,
+    target: 'es2015'
+  },
+
+  css: {
+    modules: {
+      localsConvention: 'camelCase'
+    },
+    preprocessorOptions: {
+      scss: {
+        additionalData: `@import "@/styles/variables.scss";`
+      }
+    }
   }
 });

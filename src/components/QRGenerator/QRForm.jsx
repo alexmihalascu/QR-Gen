@@ -498,6 +498,7 @@ const QRForm = ({ type, data, onChange }) => {
     }
   }, [type]);
 
+
   const handleSocialClick = (prefix) => {
     const username = data.replace(/^(?:https?:\/\/)?((?:www\.)?(?:linkedin\.com\/in\/|instagram\.com\/|facebook\.com\/|github\.com\/))?/, '');
     onChange(prefix + username);
