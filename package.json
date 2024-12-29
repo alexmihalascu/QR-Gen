@@ -28,6 +28,7 @@
     "react": "^18.3.1",
     "react-colorful": "^5.6.1",
     "react-dom": "^18.3.1",
+    "rollup-plugin-analyzer": "^4.0.0",
     "terser": "^5.37.0",
     "vite-plugin-compression": "^0.5.1",
     "workbox-cli": "^7.3.0"
