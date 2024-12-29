@@ -100,6 +100,7 @@ const ColorPicker = ({ label, color, onChange }) => {
         alignItems: 'center',
         '& > *': { borderRadius: theme.shape.borderRadius }
       }}>
+        
         <ColorInput
           type="color"
           value={color}

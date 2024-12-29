@@ -1,0 +1,13 @@
+# QR Code Generator robots.txt
+User-agent: *
+Allow: /
+
+# Disallow admin and api paths
+Disallow: /admin/
+Disallow: /api/
+
+# Sitemap location
+Sitemap: https://qr-gen-eosin-rho.vercel.app/sitemap.xml
+
+# Crawl delay for rate limiting
+Crawl-delay: 10

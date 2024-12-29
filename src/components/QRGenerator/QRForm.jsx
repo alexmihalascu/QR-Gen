@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { debounce } from 'lodash';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
+import { Map, Marker } from 'pigeon-maps';
 import {
   TextField,
   Stack,
@@ -15,6 +17,9 @@ import {
   useTheme,
   alpha,
   Autocomplete,
+  Button,
+  CircularProgress,
+  Typography
 } from '@mui/material';
 import {
   Wifi,
@@ -30,6 +35,7 @@ import {
   Instagram,
   Facebook,
   GitHub,
+  MyLocation
 } from '@mui/icons-material';
 
 import { getCountries, getCountryCallingCode, formatIncompletePhoneNumber } from 'libphonenumber-js';
@@ -96,6 +102,244 @@ const getFormattedCountries = () => {
       </Stack>
     );
   };
+
+  const LocationForm = ({ data, onChange }) => {
+    const [query, setQuery] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const [center, setCenter] = useState([
+      data?.lat ? Number(data.lat) : 44.42716,
+      data?.lng ? Number(data.lng) : 26.10249
+    ]);
+
+    const handleMarkerDrag = async ({ anchor: [lat, lng] }) => {
+      setLoading(true);
+      setQuery('');
+      const address = await getAddressFromCoordinates(lat, lng);
+      onChange({
+        ...data,
+        lat: lat.toFixed(6),
+        lng: lng.toFixed(6),
+        address: address || ''
+      });
+      setCenter([lat, lng]);
+      setLoading(false);
+    };
+  
+    const getCurrentLocation = () => {
+      const isSecureContext = window.isSecureContext;
+      if (!isSecureContext) {
+        setError("Location services require HTTPS. Please access this site via HTTPS.");
+        return;
+      }
+  
+      if (!("geolocation" in navigator)) {
+        setError("Geolocation is not supported by your browser");
+        return;
+      }
+  
+      setLoading(true);
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          onChange({
+            ...data,
+            lat: latitude.toFixed(6),
+            lng: longitude.toFixed(6)
+          });
+          setCenter([latitude, longitude]);
+          setLoading(false);
+        },
+        (error) => {
+          let errorMessage = "Could not get location: ";
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              errorMessage += "Please enable location permissions in your browser/device settings.";
+              break;
+            case error.POSITION_UNAVAILABLE:
+              errorMessage += "Location information is unavailable.";
+              break;
+            case error.TIMEOUT:
+              errorMessage += "Request timed out.";
+              break;
+            default:
+              errorMessage += error.message;
+          }
+          setError(errorMessage);
+          setLoading(false);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 5000,
+          maximumAge: 0
+        }
+      );
+    };
+
+    const getAddressFromCoordinates = async (lat, lng) => {
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?` + 
+          new URLSearchParams({
+            format: 'json',
+            lat: lat,
+            lon: lng
+          })
+        );
+        const result = await response.json();
+        return result.display_name;
+      } catch (err) {
+        console.error('Reverse geocoding failed:', err);
+        return null;
+      }
+    };
+    
+    const handleMapClick = async ({ latLng: [lat, lng] }) => {
+      setLoading(true);
+      setQuery('');
+      const address = await getAddressFromCoordinates(lat, lng);
+      onChange({
+        ...data,
+        lat: lat.toFixed(6),
+        lng: lng.toFixed(6),
+        address: address || ''
+      });
+      setCenter([lat, lng]);
+      setLoading(false);
+    };
+
+    const [previewUrl, setPreviewUrl] = useState('');
+  
+    const debouncedSearch = useCallback(
+      debounce(async (searchQuery) => {
+        if (searchQuery.length < 3) return;
+        setLoading(true);
+        setError(null);
+        
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/search?` + 
+            new URLSearchParams({
+              format: 'json',
+              q: searchQuery,
+              limit: 1
+            })
+          );
+          const results = await response.json();
+          
+          if (results?.[0]) {
+            const { lat, lon, display_name } = results[0];
+            const newLat = Number(lat);
+            const newLng = Number(lon);
+            
+            onChange({
+              ...data,
+              lat: newLat.toFixed(6),
+              lng: newLng.toFixed(6),
+              address: display_name // Add address here
+            });
+            
+            setCenter([newLat, newLng]);
+          }
+        } catch (err) {
+          setError('Could not find location');
+        } finally {
+          setLoading(false);
+        }
+      }, 1000),
+      [onChange, data, setCenter]
+    );
+  
+    useEffect(() => {
+      if (query.length >= 3) {
+        debouncedSearch(query);
+      }
+      return () => debouncedSearch.cancel();
+    }, [query, debouncedSearch]);
+  
+        return (
+          <Stack spacing={3}>
+           <StyledInput
+            label="Search Address"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            error={!!error}
+            helperText={error || 'Enter at least 3 characters to search'}
+            fullWidth
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <LocationOn />
+                </InputAdornment>
+              ),
+              endAdornment: loading && (
+                <InputAdornment position="end">
+                  <CircularProgress size={20} />
+                </InputAdornment>
+              )
+            }}
+          />
+          <Button
+            variant="outlined"
+            onClick={getCurrentLocation}
+            startIcon={<MyLocation />}
+            fullWidth
+          >
+            Use Current Location
+          </Button>
+            
+            <Box sx={{ width: '100%', height: 300, borderRadius: 2, overflow: 'hidden', border: (theme) => `1px solid ${theme.palette.divider}` }}>
+            <Map
+              defaultCenter={center}
+              center={center}
+              defaultZoom={11}
+              onClick={handleMapClick}
+            >
+              <Marker
+                width={50}
+                color="#FF0000"
+                anchor={[Number(data?.lat) || center[0], Number(data?.lng) || center[1]]}
+                onClick={handleMapClick}
+                draggable={true}
+                onDragEnd={handleMarkerDrag}
+              />
+            </Map>
+          </Box>
+
+      <Stack direction="row" spacing={2}>
+        <StyledInput
+          label="Latitude"
+          type="number"
+          value={data?.lat || ''}
+          onChange={(e) => onChange({ ...data, lat: e.target.value })}
+          fullWidth
+        />
+        <StyledInput
+          label="Longitude"
+          type="number"
+          value={data?.lng || ''}
+          onChange={(e) => onChange({ ...data, lng: e.target.value })}
+          fullWidth
+        />
+      </Stack>
+
+      {data?.address && (
+       <Typography
+       variant="body2" 
+       color="text.secondary"
+       sx={{
+         mt: 1,
+         p: 1.5,
+         borderRadius: 1,
+         bgcolor: (theme) => alpha(theme.palette.background.paper, 0.5)
+       }}
+     >
+       📍 {data?.address || 'No location selected'}
+     </Typography>
+    )}
+    </Stack>
+  );
+};
 
 const StyledInput = styled(TextField)(({ theme }) => ({
     '.MuiOutlinedInput-root': {
@@ -225,6 +469,7 @@ const QRForm = ({ type, data, onChange }) => {
       <Tooltip title="GitHub Profile">
         <SocialButton
           size="small"
+          aria-label = "GitHub Profile"
           bgcolor={theme.palette.mode === 'dark' ? '#333' : '#181717'}
           onClick={() => handleSocialClick('https://github.com/')}
           theme={theme}
@@ -234,6 +479,25 @@ const QRForm = ({ type, data, onChange }) => {
       </Tooltip>
     </Stack>
   );
+
+  const generateEventContent = (data) => {
+    if (!data.title || !data.start || !data.end) return '';
+  
+    const eventData = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'BEGIN:VEVENT',
+      `SUMMARY:${data.title}`,
+      data.description ? `DESCRIPTION:${data.description}` : '',
+      data.location ? `LOCATION:${data.location}` : '',
+      `DTSTART:${formatDateTime(data.start)}Z`,
+      `DTEND:${formatDateTime(data.end)}Z`,
+      'END:VEVENT',
+      'END:VCALENDAR'
+    ].filter(Boolean).join('\n');
+  
+    return eventData;
+  };
 
   const renderForm = () => {
     switch (type) {
@@ -393,6 +657,88 @@ const QRForm = ({ type, data, onChange }) => {
                     fullWidth
                 />
             );
+
+            case 'sms':
+  return (
+    <Stack spacing={3}>
+      <PhoneInput
+        value={data?.phone || ''}
+        onChange={(phone) => onChange({ ...data, phone })}
+        fullWidth
+      />
+      <StyledInput
+        label="Message"
+        multiline
+        rows={3}
+        value={data?.message || ''}
+        onChange={(e) => onChange({ ...data, message: e.target.value })}
+        fullWidth
+      />
+    </Stack>
+  );
+
+  case 'event':
+return (
+  <Stack spacing={3}>
+    <StyledInput
+      label="Event Title"
+      value={data?.title || ''}
+      onChange={(e) => onChange({
+        ...data,
+        title: e.target.value
+      })}
+      required
+      fullWidth
+    />
+    <StyledInput
+      label="Description"
+      multiline
+      rows={3}
+      value={data?.description || ''}
+      onChange={(e) => onChange({
+        ...data,
+        description: e.target.value
+      })}
+      fullWidth
+    />
+    <StyledInput
+      label="Location"
+      value={data?.location || ''}
+      onChange={(e) => onChange({
+        ...data,
+        location: e.target.value
+      })}
+      fullWidth
+    />
+    <StyledInput
+      label="Start Date/Time"
+      type="datetime-local"
+      value={data?.start || ''}
+      onChange={(e) => onChange({
+        ...data,
+        start: e.target.value
+      })}
+      required
+      InputLabelProps={{ shrink: true }}
+      fullWidth
+    />
+    <StyledInput
+      label="End Date/Time"
+      type="datetime-local"
+      value={data?.end || ''}
+      onChange={(e) => onChange({
+        ...data,
+        end: e.target.value
+      })}
+      required
+      InputLabelProps={{ shrink: true }}
+      fullWidth
+    />
+  </Stack>
+);
+
+case 'geo':
+  return <LocationForm data={data} onChange={onChange} />;
 
       default:
         return (

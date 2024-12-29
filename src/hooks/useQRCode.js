@@ -1,71 +1,84 @@
-import { useState, useCallback } from 'react';
-
-const defaultOptions = {
-  size: 256,
-  level: 'H',
-  bgColor: '#FFFFFF',
-  fgColor: '#000000',
-  includeMargin: true,
+const formatDateTime = (date) => {
+  if (!date) return '';
+  const d = new Date(date);
+  const pad = (n) => n.toString().padStart(2, '0');
+  
+  return [
+    d.getUTCFullYear(),
+    pad(d.getUTCMonth() + 1),
+    pad(d.getUTCDate()),
+    'T',
+    pad(d.getUTCHours()),
+    pad(d.getUTCMinutes()),
+    pad(d.getUTCSeconds()),
+    'Z'
+  ].join('');
 };
 
-export const useQRCode = () => {
-  const [qrData, setQRData] = useState('');
-  const [qrOptions, setQROptions] = useState(defaultOptions);
+export const formatQRData = (type, data) => {
+  if (!data) return '';
+  switch (type) {
+    case 'url':
+      return typeof data === 'string' ? 
+        (data.startsWith('http') ? data : `https://${data}`) : '';
+      
+    case 'wifi':
+      if (!data?.ssid) return '';
+      return `WIFI:T:${data.encryption};S:${data.ssid}${data.password ? `;P:${data.password}` : ''};H:false;;`;
+      
+    case 'email':
+      return typeof data === 'string' ? `mailto:${data}` : '';
+      
+    case 'phone':
+      return typeof data === 'string' ? `tel:${data}` : '';
+      
+    case 'vcard':
+      return typeof data === 'object' ? formatVCard(data) : '';
 
-  const updateQRData = useCallback((newData) => {
-    setQRData(newData);
-  }, []);
+    case 'sms':
+      return `smsto:${data.phone}:${data.message}`;
 
-  const updateQROptions = useCallback((newOptions) => {
-    setQROptions(prev => ({ ...prev, ...newOptions }));
-  }, []);
-
-  const formatQRData = useCallback((type, data) => {
-    switch (type) {
-      case 'url':
-        return data.startsWith('http') ? data : `https://${data}`;
-      case 'wifi':
-        return `WIFI:T:${data.encryption};S:${data.ssid};P:${data.password};;`;
-      case 'email':
-        return `mailto:${data}`;
-      case 'phone':
-        return `tel:${data}`;
-      case 'vcard':
-        return formatVCard(data);
-      case 'calendar':
-        return formatCalendar(data);
-      case 'location':
-        return `geo:${data.latitude},${data.longitude}`;
-      default:
-        return data;
-    }
-  }, []);
-
-  return {
-    qrData,
-    qrOptions,
-    updateQRData,
-    updateQROptions,
-    formatQRData,
-  };
+      case 'event':
+        if (!data?.title || !data?.start || !data?.end) return '';
+        return [
+          'BEGIN:VCALENDAR',
+          'VERSION:3.0',
+          'PRODID:-//QR Generator//EN',
+          'CALSCALE:GREGORIAN',
+          'METHOD:PUBLISH',
+          'BEGIN:VEVENT',
+          `SUMMARY:${data.title.replace(/[,;\\]/g, '\\$&')}`,
+          data.description ? `DESCRIPTION:${data.description.replace(/[,;\\]/g, '\\$&')}` : '',
+          data.location ? `LOCATION:${data.location.replace(/[,;\\]/g, '\\$&')}` : '',
+          `DTSTART:${formatDateTime(data.start)}`,
+          `DTEND:${formatDateTime(data.end)}`,
+          'END:VEVENT',
+          'END:VCALENDAR'
+        ].filter(Boolean).join('\r\n');
+    case 'geo':
+      return `geo:${data.lat},${data.lng}`;
+      
+    default:
+      return typeof data === 'string' ? data : '';
+  }
 };
 
 const formatVCard = (data) => {
-  return `BEGIN:VCARD
-VERSION:3.0
-FN:${data.name}
-TEL:${data.phone}
-EMAIL:${data.email}
-ADR:;;${data.address}
-END:VCARD`;
-};
+  if (!data.name) return '';
+  
+  let vcard = [
+    'BEGIN:VCARD',
+    'VERSION:3.0',
+    `FN:${data.name}`,
+  ];
 
-const formatCalendar = (data) => {
-  return `BEGIN:VEVENT
-SUMMARY:${data.title}
-DTSTART:${data.startDate}
-DTEND:${data.endDate}
-DESCRIPTION:${data.description}
-LOCATION:${data.location}
-END:VEVENT`;
+  if (data.email) vcard.push(`EMAIL:${data.email}`);
+  if (data.phone) vcard.push(`TEL:${data.phone}`);
+  if (data.address) vcard.push(`ADR:;;${data.address}`);
+  if (data.company) vcard.push(`ORG:${data.company}`);
+  if (data.title) vcard.push(`TITLE:${data.title}`);
+
+  vcard.push('END:VCARD');
+
+  return vcard.join('\r\n');
 };

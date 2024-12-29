@@ -125,36 +125,47 @@ const QRControls = ({ options, onChange, qrRef, qrData }) => {
       transition={{ duration: 0.3 }}
     >
       <Stack spacing={4}>
-        <Typography 
-          variant="h6" 
-          sx={{ 
-            fontWeight: 700,
-            background: 'linear-gradient(45deg, #2196f3, #1976d2)',
-            backgroundClip: 'text',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-          }}
-        >
-          Customize QR Code
-        </Typography>
+      <Typography 
+        variant="h2" 
+        component="h2"
+        sx={{ 
+          fontWeight: 700,
+          fontSize: '1.5rem', // Keep same visual size as before
+          background: 'linear-gradient(45deg, #2196f3, #1976d2)',
+          backgroundClip: 'text',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+        }}
+      >
+        Customize QR Code
+      </Typography>
 
         <Box>
-          <Typography variant="subtitle2" mb={2}>
-            Size: {localOptions.size}px
-          </Typography>
-          <Stack direction="row" spacing={2} alignItems="center">
-            <Tooltip title="Decrease size">
+        <Typography 
+          id="size-slider-label" 
+          variant="h3"
+          component="h3"
+          mb={2}
+          sx={{ fontSize: '1rem' }} // Keep same visual size
+        >
+          Size: {localOptions.size}px
+        </Typography>
+        <Stack direction="row" spacing={2} alignItems="center">
+          <Tooltip title="Decrease size">
             <span>
-                <IconButton 
+              <IconButton 
+                aria-label="Decrease QR code size"
                 size="small"
                 onClick={() => handleZoom('out')}
                 disabled={localOptions.size <= 128}
-                >
+              >
                 <ZoomOut />
-                </IconButton>
+              </IconButton>
             </span>
-            </Tooltip>
-            <StyledSlider
+          </Tooltip>
+          <StyledSlider
+            id="size-slider"
+            aria-labelledby="size-slider-label"
             value={localOptions.size}
             min={128}
             max={1024}
@@ -163,38 +174,48 @@ const QRControls = ({ options, onChange, qrRef, qrData }) => {
             valueLabelDisplay="auto"
             valueLabelFormat={(value) => `${value}px`}
             marks={[
-                { value: 128, label: '128px' },
-                { value: 512, label: '512px' },
-                { value: 1024, label: '1024px' }
+              { value: 128, label: '128px' },
+              { value: 512, label: '512px' },
+              { value: 1024, label: '1024px' }
             ]}
-            />
-            <Tooltip title="Increase size">
+          />
+          <Tooltip title="Increase size">
             <span>
-                <IconButton 
+              <IconButton
+                aria-label="Increase QR code size" 
                 size="small"
                 onClick={() => handleZoom('in')}
                 disabled={localOptions.size >= 512}
-                >
+              >
                 <ZoomIn />
-                </IconButton>
+              </IconButton>
             </span>
-            </Tooltip>
-          </Stack>
-        </Box>
+          </Tooltip>
+        </Stack>
+      </Box>
 
-        <Box>
-          <Typography variant="subtitle2" mb={2}>Colors</Typography>
+      <Box>
+      <Typography 
+        id="color-picker-label"
+        variant="h3" 
+        component="h3"
+        mb={2}
+        sx={{ fontSize: '1rem' }} // Keep same visual size
+      >
+        Colors
+      </Typography>
           <Stack direction="row" spacing={2}>
-          <Tooltip title="Change QR code color">
-            <span>
+            <Tooltip title="Change QR code color">
+              <span>
                 <ColorButton
-                color={localOptions.fgColor}
-                onClick={(e) => handleColorClick(e, 'fg')}
-                aria-label="QR code color"
+                  color={localOptions.fgColor}
+                  onClick={(e) => handleColorClick(e, 'fg')}
+                  aria-label="Change QR code color"
+                  aria-describedby="color-picker-label"
                 >
-                <Palette sx={{ color: luminance(localOptions.fgColor) > 0.5 ? '#000' : '#fff' }} />
+                  <Palette sx={{ color: luminance(localOptions.fgColor) > 0.5 ? '#000' : '#fff' }} />
                 </ColorButton>
-            </span>
+              </span>
             </Tooltip>
             <Stack direction="row" spacing={1}>
             <Tooltip title="Change background color">
@@ -297,11 +318,13 @@ const QRControls = ({ options, onChange, qrRef, qrData }) => {
               </Box>
             )}
             <HexColorPicker
-              color={activeColor === 'fg' ? localOptions.fgColor : localOptions.bgColor}
-              onChange={(color) => handleOptionChange({ 
-                [activeColor === 'fg' ? 'fgColor' : 'bgColor']: color 
-              })}
-            />
+            id="hex-color-picker"
+            aria-label={`${activeColor === 'fg' ? 'QR Code' : 'Background'} color picker`}
+            color={activeColor === 'fg' ? localOptions.fgColor : localOptions.bgColor}
+            onChange={(color) => handleOptionChange({ 
+              [activeColor === 'fg' ? 'fgColor' : 'bgColor']: color 
+            })}
+          />
           </Stack>
         </Popover>
       </Stack>

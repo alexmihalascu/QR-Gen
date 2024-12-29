@@ -9,6 +9,7 @@ const ThemeToggle = () => {
   return (
     <IconButton 
       onClick={toggleTheme} 
+      aria-label={`Switch to ${mode === 'dark' ? 'light' : 'dark'} mode`}
       sx={{ 
         color: theme.palette.primary.main,
         transition: 'all 0.3s ease',

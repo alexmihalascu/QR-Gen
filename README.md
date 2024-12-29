@@ -1,40 +1,54 @@
 # 🎨 QR-Gen
 ![QR-Gen](https://i.ibb.co/RTJQ7Hm/android-chrome-192x192.png)
 
-**QR-Gen** is a modern Progressive Web App (PWA) for generating customizable QR codes. Built with **React** and **Material UI**, it offers a versatile platform for creating QR codes for various purposes including web links, plain text, WiFi credentials, vCards, and phone numbers.
+**QR-Gen** is a modern Progressive Web App (PWA) for generating customizable QR codes. Built with **React** and **Material UI**, it offers a versatile platform for creating QR codes for various purposes including web links, events, locations, WiFi credentials, vCards, and more.
 
 ## ✨ Key Features
 
 ### 🎯 1. Multiple QR Code Types
-- **Web Links**: Generate QR codes for websites and URLs
+- **Web Links**: Generate QR codes for websites and URLs with social media shortcuts
 - **Plain Text**: Convert any text into a QR code
 - **WiFi Credentials**: Create QR codes for easy network access
 - **vCard**: Generate contact information QR codes
 - **Phone Numbers**: Quick dial QR codes
+- **SMS**: Generate QR codes for text messages
+- **Events**: Create calendar events with full details
+- **Locations**: Share specific locations with interactive map
+- **Email**: Generate email QR codes
 
-### 🎨 2. Customization Options
+### 🗺️ 2. Map Integration
+- **Interactive Map**: Select locations using Pigeon Maps
+- **Geocoding**: Search for addresses and locations
+- **Current Location**: Use device GPS for quick location sharing
+- **Draggable Markers**: Fine-tune location selection
+- **Address Display**: Show full address details
+
+### 🎨 3. Customization Options
 - **Full Color Control**: Customize both QR code and background colors
 - **Transparency Support**: Create QR codes with transparent backgrounds
 - **Design Flexibility**: Adjust size and style to match your needs
 
-### 💾 3. Multiple Export Formats
+### 💾 4. Multiple Export Formats
 - **PNG Export**: High-quality raster image export
 - **SVG Export**: Scalable vector graphics for perfect quality at any size
 - **PDF Export**: Professional document format
 - **Direct Sharing**: Share via WhatsApp and other platforms
 
-### 📱 4. Progressive Web App (PWA)
+### 📱 5. Progressive Web App (PWA)
 - **Install Anywhere**: Use on desktop or mobile without app store downloads
 - **Offline Support**: Generate QR codes even without internet connection
 - **Responsive Design**: Optimal experience across all devices
 
 ## 🔧 Technical Stack
 - **React**: Frontend framework
-- **Material UI**: Modern UI components
+- **Material UI**: UI components and theming
+- **Emotion**: Styled components and CSS-in-JS
+- **Framer Motion**: Animations and transitions
+- **Pigeon Maps**: Interactive map integration
+- **libphonenumber-js**: Phone number formatting
+- **QRCode.react**: QR code generation
 - **Vite**: Build tool and development server
-- **PWA Support**: Complete offline functionality
-- **File-Saver**: Reliable file export functionality
-- **QRCode.react**: QR code generation library
+- **Workbox**: PWA and service worker support
 
 ## 🚀 Installation
 
@@ -80,11 +94,12 @@ Contributions are welcome! Feel free to:
 ## 📄 License
 This project is open-source and available under the [MIT License](LICENSE).
 
-## 📦 Dependencies
-Key packages used:
-- React 18.3.1
-- Material UI 6.3.0
-- QRCode.react 4.2.0
-- File-Saver 2.5.2
-- Framer Motion 11.15.0
-- Various development tools including Vite, ESLint, and PWA plugins
+## 📦 Key Dependencies
+- **@mui/material & @mui/icons-material**: UI framework
+- **pigeon-maps**: OpenStreetMap integration
+- **libphonenumber-js**: Phone number handling
+- **qrcode.react**: QR code generation
+- **react-colorful**: Color picker
+- **framer-motion**: Animations
+- **file-saver**: File download handling
+- **jspdf**: PDF generation

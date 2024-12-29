@@ -1,3 +1,24 @@
+
+const generateUID = () => {
+  return 'qr-' + Date.now() + '@qrgenerator.com';
+};
+
+const formatDateTime = (date) => {
+  if (!date) return '';
+  const d = new Date(date);
+  const pad = (n) => n.toString().padStart(2, '0');
+  
+  return [
+    d.getUTCFullYear(),
+    pad(d.getUTCMonth() + 1),
+    pad(d.getUTCDate()),
+    'T',
+    pad(d.getUTCHours()),
+    pad(d.getUTCMinutes()),
+    '00'
+  ].join('');
+};
+
 export const formatQRData = (type, data) => {
     if (!data) return '';
     
@@ -18,6 +39,30 @@ export const formatQRData = (type, data) => {
         
       case 'vcard':
         return typeof data === 'object' ? formatVCard(data) : '';
+
+      case 'sms':
+        return `smsto:${data.phone}:${data.message}`;
+
+      case 'event':
+        if (!data?.title || !data?.start || !data?.end) return '';
+        return [
+          'BEGIN:VCALENDAR',
+          'VERSION:2.0',
+          'PRODID:-//QR Generator//EN',
+          'BEGIN:VEVENT',
+          `UID:${generateUID()}`,
+          `DTSTAMP:${formatDateTime(new Date())}Z`,
+          `DTSTART:${formatDateTime(data.start)}Z`,
+          `DTEND:${formatDateTime(data.end)}Z`,
+          `SUMMARY:${data.title.replace(/[,;\\]/g, '\\$&')}`,
+          data.description ? `DESCRIPTION:${data.description.replace(/[,;\\]/g, '\\$&')}` : '',
+          data.location ? `LOCATION:${data.location.replace(/[,;\\]/g, '\\$&')}` : '',
+          'END:VEVENT',
+          'END:VCALENDAR'
+        ].filter(Boolean).join('\r\n');
+      
+      case 'geo':
+        return `geo:${data.lat},${data.lng}`;
         
       default:
         return typeof data === 'string' ? data : '';

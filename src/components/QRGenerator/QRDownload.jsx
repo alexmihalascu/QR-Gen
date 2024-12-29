@@ -92,7 +92,7 @@ const QRDownload = ({ qrRef, qrData, options }) => {
   const getFormattedInput = (data) => {
     if (!data) return 'unknown';
 
-    // Extract type and content
+  
     const type = data.split(':')[0];
     const content = data.split(':')[1];
 
@@ -123,13 +123,15 @@ const QRDownload = ({ qrRef, qrData, options }) => {
   const getFileName = (format) => {
     const timestamp = new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-');
     
-    // Determine type from data content
     let type = 'text';
     if (qrData?.startsWith('tel:')) type = 'phone';
     else if (qrData?.startsWith('WIFI:')) type = 'wifi';
     else if (qrData?.startsWith('mailto:')) type = 'email';
     else if (qrData?.startsWith('BEGIN:VCARD')) type = 'vcard';
     else if (qrData?.startsWith('http')) type = 'url';
+    else if (qrData?.startsWith('geo:')) type = 'geo';
+    else if (qrData?.startsWith('smsto:')) type = 'sms';
+    else if (qrData?.startsWith('BEGIN:VCALENDAR')) type = 'event';
 
     const input = getFormattedInput(qrData);
     return `qr_${type}_${input}_${timestamp}.${format}`;

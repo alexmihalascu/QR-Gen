@@ -4,12 +4,15 @@ import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import { formatQRData } from '../../utils/qrFormatters';
 import { 
-  Link as LinkIcon, 
+  Link as LinkIcon,
   TextFields, 
   Email, 
   Phone, 
-  Wifi, 
-  Language 
+  Wifi,
+  Language,
+  Sms,
+  Event,
+  LocationOn 
 } from '@mui/icons-material';
 
 
@@ -128,6 +131,26 @@ const QRGenerator = () => {
             title: ''
           });
           break;
+        case 'sms':
+          setQRData({
+            phone: '',
+            message: ''
+          });
+          break;
+        case 'event':
+          setQRData({
+            title: '',
+            location: '',
+            start: '',
+            end: ''
+          });
+          break;
+        case 'geo':
+          setQRData({
+            lat: '',
+            lng: ''
+          });
+          break;
         default:
           setQRData('');
       }
@@ -143,26 +166,25 @@ const QRGenerator = () => {
   
     return (
       <Container maxWidth="xl" sx={{ py: { xs: 3, md: 5 } }}>
-        <GlassContainer
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
+      <GlassContainer>
+        <StyledTabs
+          value={activeTab}
+          onChange={handleTabChange}
+          variant={isMobile ? "scrollable" : "standard"}
+          scrollButtons="auto"
+          allowScrollButtonsMobile
+          sx={{ mb: 4 }}
         >
-          <StyledTabs
-            value={activeTab}
-            onChange={handleTabChange}
-            variant={isMobile ? "scrollable" : "standard"}
-            scrollButtons="auto"
-            allowScrollButtonsMobile
-            sx={{ mb: 4 }}
-          >
-            <Tab icon={<LinkIcon />} label="URL" value="url" />
-            <Tab icon={<TextFields />} label="Text" value="text" />
-            <Tab icon={<Email />} label="Email" value="email" />
-            <Tab icon={<Phone />} label="Phone" value="phone" />
-            <Tab icon={<Wifi />} label="WiFi" value="wifi" />
-            <Tab icon={<Language />} label="vCard" value="vcard" />
-          </StyledTabs>
+          <Tab icon={<LinkIcon />} label="URL" value="url" />
+          <Tab icon={<TextFields />} label="Text" value="text" />
+          <Tab icon={<Email />} label="Email" value="email" />
+          <Tab icon={<Phone />} label="Phone" value="phone" />
+          <Tab icon={<Sms />} label="SMS" value="sms" />
+          <Tab icon={<Wifi />} label="WiFi" value="wifi" />
+          <Tab icon={<Event />} label="Event" value="event" />
+          <Tab icon={<LocationOn />} label="Location" value="geo" />
+          <Tab icon={<Language />} label="vCard" value="vcard" />
+        </StyledTabs>
   
           <ContentWrapper>
             <Stack spacing={3}>
