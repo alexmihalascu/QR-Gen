@@ -12,7 +12,7 @@ export default defineConfig({
           ['@emotion/babel-plugin', { sourceMap: false }]
         ],
       },
-      fastRefresh: true
+      // fastRefresh: true
     }),
     compression({
       algorithm: 'brotlicompress',
