@@ -1,5 +1,5 @@
 # 🎨 QR-Gen
-![QR-Gen]([https://i.ibb.co/placeholder-image](https://i.ibb.co/RTJQ7Hm/android-chrome-192x192.png))
+![QR-Gen](https://i.ibb.co/RTJQ7Hm/android-chrome-192x192.png)
 
 **QR-Gen** is a modern Progressive Web App (PWA) for generating customizable QR codes. Built with **React** and **Material UI**, it offers a versatile platform for creating QR codes for various purposes including web links, plain text, WiFi credentials, vCards, and phone numbers.
 
@@ -66,7 +66,8 @@
 - `npm run preview`: Preview production build
 - `npm run lint`: Run ESLint
 
-## 🌐 [Live Demo](https://your-demo-link-here](https://qr-gen-eosin-rho.vercel.app/)
+## 🌐 [Live Demo]
+![QR-Gen](https://qr-gen-eosin-rho.vercel.app/)
 Try QR-Gen live and experience all features firsthand!
 
 ## 🤝 Contributing
