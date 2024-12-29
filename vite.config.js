@@ -20,20 +20,23 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
+      strategies: 'generateSW',
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         cleanupOutdatedCaches: true,
         skipWaiting: true,
         clientsClaim: true,
+        navigateFallback: '/offline.html', // Changed from offlineFallback
+        navigateFallbackAllowlist: [/^(?!\/__).*/], // Add allowlist for navigation fallback
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-            handler: 'StaleWhileRevalidate',
+            handler: 'CacheFirst',
             options: {
               cacheName: 'google-fonts',
               expiration: {
                 maxEntries: 4,
-                maxAgeSeconds: 7 * 24 * 60 * 60 // 1 week
+                maxAgeSeconds: 7 * 24 * 60 * 60
               }
             }
           },
@@ -44,7 +47,25 @@ export default defineConfig({
               cacheName: 'images',
               expiration: {
                 maxEntries: 50,
-                maxAgeSeconds: 30 * 24 * 60 * 60 // 30 days
+                maxAgeSeconds: 30 * 24 * 60 * 60
+              }
+            }
+          },
+          {
+            urlPattern: /^https:\/\/api\./i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'api-cache',
+              networkTimeoutSeconds: 5,
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 // 1 hour
+              },
+              backgroundSync: {
+                name: 'apiQueue',
+                options: {
+                  maxRetentionTime: 24 * 60 // Retry for up to 24 hours
+                }
               }
             }
           }
@@ -53,11 +74,12 @@ export default defineConfig({
       manifest: {
         name: 'QR Code Generator',
         short_name: 'QR Gen',
-        description: 'Advanced QR Code Generator',
+        description: 'Advanced QR Code Generator - Works Offline',
         theme_color: '#ffffff',
         background_color: '#ffffff',
         display: 'standalone',
         orientation: 'portrait',
+        categories: ['productivity', 'utilities'],
         icons: [
           {
             src: 'assets/favicon-32x32.png',
@@ -77,7 +99,9 @@ export default defineConfig({
             purpose: 'any maskable'
           }
         ],
-        start_url: '/'
+        start_url: '/',
+        scope: '/',
+        prefer_related_applications: false
       }
     })
   ],
@@ -91,6 +115,9 @@ export default defineConfig({
         drop_debugger: true,
         pure_funcs: ['console.log'],
         passes: 2
+      },
+      format: {
+        comments: false
       }
     },
     rollupOptions: {

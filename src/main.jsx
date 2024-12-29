@@ -10,14 +10,15 @@ import '@fontsource/roboto/700.css';
 import './index.css';
 
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then(registration => {
-        console.log('ServiceWorker registration successful');
-      })
-      .catch(err => {
-        console.error('ServiceWorker registration failed:', err);
+  window.addEventListener('load', async () => {
+    try {
+      const registration = await navigator.serviceWorker.register('/sw.js', {
+        scope: '/'
       });
+      console.log('SW registered:', registration);
+    } catch (error) {
+      console.error('SW registration failed:', error);
+    }
   });
 }
 
