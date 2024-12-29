@@ -107,14 +107,35 @@ const getFormattedCountries = () => {
     const [query, setQuery] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [isOffline, setIsOffline] = useState(!navigator.onLine);
     const [center, setCenter] = useState([
       data?.lat ? Number(data.lat) : 44.42716,
       data?.lng ? Number(data.lng) : 26.10249
     ]);
+  
+    // Monitor online/offline status
+    useEffect(() => {
+      const handleOnline = () => setIsOffline(false);
+      const handleOffline = () => setIsOffline(true);
+  
+      window.addEventListener('online', handleOnline);
+      window.addEventListener('offline', handleOffline);
+  
+      return () => {
+        window.removeEventListener('online', handleOnline);
+        window.removeEventListener('offline', handleOffline);
+      };
+    }, []);
 
-    const handleMarkerDrag = async ({ anchor: [lat, lng] }) => {
-      setLoading(true);
-      setQuery('');
+     const handleMarkerDrag = async ({ anchor: [lat, lng] }) => {
+    if (isOffline) {
+      setError("Cannot fetch address details: No internet connection");
+      return;
+    }
+
+    setLoading(true);
+    setQuery('');
+    try {
       const address = await getAddressFromCoordinates(lat, lng);
       onChange({
         ...data,
@@ -123,80 +144,111 @@ const getFormattedCountries = () => {
         address: address || ''
       });
       setCenter([lat, lng]);
+      setError(null);
+    } catch (err) {
+      setError("Failed to fetch address details. Please check your internet connection.");
+    } finally {
       setLoading(false);
-    };
+    }
+  };
   
-    const getCurrentLocation = () => {
-      const isSecureContext = window.isSecureContext;
-      if (!isSecureContext) {
-        setError("Location services require HTTPS. Please access this site via HTTPS.");
-        return;
-      }
-  
-      if (!("geolocation" in navigator)) {
-        setError("Geolocation is not supported by your browser");
-        return;
-      }
-  
-      setLoading(true);
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
+  const getCurrentLocation = () => {
+    const isSecureContext = window.isSecureContext;
+    if (!isSecureContext) {
+      setError("Location services require HTTPS. Please access this site via HTTPS.");
+      return;
+    }
+
+    if (!("geolocation" in navigator)) {
+      setError("Geolocation is not supported by your browser");
+      return;
+    }
+
+    if (isOffline) {
+      setError("Cannot get location details: No internet connection");
+      return;
+    }
+
+    setLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          const address = await getAddressFromCoordinates(latitude, longitude);
           onChange({
             ...data,
             lat: latitude.toFixed(6),
-            lng: longitude.toFixed(6)
+            lng: longitude.toFixed(6),
+            address: address || ''
           });
           setCenter([latitude, longitude]);
+          setError(null);
+        } catch (err) {
+          setError("Got location but failed to fetch address details. Please check your internet connection.");
+        } finally {
           setLoading(false);
-        },
-        (error) => {
-          let errorMessage = "Could not get location: ";
-          switch (error.code) {
-            case error.PERMISSION_DENIED:
-              errorMessage += "Please enable location permissions in your browser/device settings.";
-              break;
-            case error.POSITION_UNAVAILABLE:
-              errorMessage += "Location information is unavailable.";
-              break;
-            case error.TIMEOUT:
-              errorMessage += "Request timed out.";
-              break;
-            default:
-              errorMessage += error.message;
-          }
-          setError(errorMessage);
-          setLoading(false);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 5000,
-          maximumAge: 0
         }
-      );
-    };
-
-    const getAddressFromCoordinates = async (lat, lng) => {
-      try {
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?` + 
-          new URLSearchParams({
-            format: 'json',
-            lat: lat,
-            lon: lng
-          })
-        );
-        const result = await response.json();
-        return result.display_name;
-      } catch (err) {
-        console.error('Reverse geocoding failed:', err);
-        return null;
+      },
+      (error) => {
+        let errorMessage = "Could not get location: ";
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage += "Please enable location permissions in your browser/device settings.";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage += "Location information is unavailable.";
+            break;
+          case error.TIMEOUT:
+            errorMessage += "Request timed out.";
+            break;
+          default:
+            errorMessage += error.message;
+        }
+        setError(errorMessage);
+        setLoading(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 5000,
+        maximumAge: 0
       }
-    };
+    );
+  };
+
+  const getAddressFromCoordinates = async (lat, lng) => {
+    if (!navigator.onLine) {
+      throw new Error('No internet connection');
+    }
+
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?` + 
+        new URLSearchParams({
+          format: 'json',
+          lat: lat,
+          lon: lng
+        })
+      );
+      if (!response.ok) {
+        throw new Error('Failed to fetch address');
+      }
+      const result = await response.json();
+      return result.display_name;
+    } catch (err) {
+      console.error('Reverse geocoding failed:', err);
+      throw err;
+    }
+  };
     
-    const handleMapClick = async ({ latLng: [lat, lng] }) => {
-      setLoading(true);
-      setQuery('');
+  const handleMapClick = async ({ latLng: [lat, lng] }) => {
+    if (isOffline) {
+      setError("Cannot fetch address details: No internet connection");
+      return;
+    }
+
+    setLoading(true);
+    setQuery('');
+    try {
       const address = await getAddressFromCoordinates(lat, lng);
       onChange({
         ...data,
@@ -205,14 +257,24 @@ const getFormattedCountries = () => {
         address: address || ''
       });
       setCenter([lat, lng]);
+      setError(null);
+    } catch (err) {
+      setError("Failed to fetch address details. Please check your internet connection.");
+    } finally {
       setLoading(false);
-    };
+    }
+  };
 
     const [previewUrl, setPreviewUrl] = useState('');
   
     const debouncedSearch = useCallback(
       debounce(async (searchQuery) => {
         if (searchQuery.length < 3) return;
+        if (isOffline) {
+          setError("Cannot search address: No internet connection");
+          return;
+        }
+        
         setLoading(true);
         setError(null);
         
@@ -225,6 +287,9 @@ const getFormattedCountries = () => {
               limit: 1
             })
           );
+          if (!response.ok) {
+            throw new Error('Search request failed');
+          }
           const results = await response.json();
           
           if (results?.[0]) {
@@ -236,18 +301,21 @@ const getFormattedCountries = () => {
               ...data,
               lat: newLat.toFixed(6),
               lng: newLng.toFixed(6),
-              address: display_name // Add address here
+              address: display_name
             });
             
             setCenter([newLat, newLng]);
+            setError(null);
+          } else {
+            setError('No results found for this address');
           }
         } catch (err) {
-          setError('Could not find location');
+          setError('Failed to search location. Please check your internet connection.');
         } finally {
           setLoading(false);
         }
       }, 1000),
-      [onChange, data, setCenter]
+      [onChange, data, setCenter, isOffline]
     );
   
     useEffect(() => {
@@ -259,12 +327,12 @@ const getFormattedCountries = () => {
   
         return (
           <Stack spacing={3}>
-           <StyledInput
+          <StyledInput
             label="Search Address"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             error={!!error}
-            helperText={error || 'Enter at least 3 characters to search'}
+            helperText={error || (isOffline ? 'Currently offline - some features may be limited' : 'Enter at least 3 characters to search')}
             fullWidth
             InputProps={{
               startAdornment: (
@@ -283,12 +351,13 @@ const getFormattedCountries = () => {
             variant="outlined"
             onClick={getCurrentLocation}
             startIcon={<MyLocation />}
+            disabled={loading}
             fullWidth
           >
             Use Current Location
           </Button>
             
-            <Box sx={{ width: '100%', height: 300, borderRadius: 2, overflow: 'hidden', border: (theme) => `1px solid ${theme.palette.divider}` }}>
+          <Box sx={{ width: '100%', height: 300, borderRadius: 2, overflow: 'hidden', border: (theme) => `1px solid ${theme.palette.divider}` }}>
             <Map
               defaultCenter={center}
               center={center}
@@ -305,41 +374,41 @@ const getFormattedCountries = () => {
               />
             </Map>
           </Box>
-
-      <Stack direction="row" spacing={2}>
-        <StyledInput
-          label="Latitude"
-          type="number"
-          value={data?.lat || ''}
-          onChange={(e) => onChange({ ...data, lat: e.target.value })}
-          fullWidth
-        />
-        <StyledInput
-          label="Longitude"
-          type="number"
-          value={data?.lng || ''}
-          onChange={(e) => onChange({ ...data, lng: e.target.value })}
-          fullWidth
-        />
-      </Stack>
-
-      {data?.address && (
-       <Typography
-       variant="body2" 
-       color="text.secondary"
-       sx={{
-         mt: 1,
-         p: 1.5,
-         borderRadius: 1,
-         bgcolor: (theme) => alpha(theme.palette.background.paper, 0.5)
-       }}
-     >
-       📍 {data?.address || 'No location selected'}
-     </Typography>
-    )}
-    </Stack>
-  );
-};
+    
+          <Stack direction="row" spacing={2}>
+            <StyledInput
+              label="Latitude"
+              type="number"
+              value={data?.lat || ''}
+              onChange={(e) => onChange({ ...data, lat: e.target.value })}
+              fullWidth
+            />
+            <StyledInput
+              label="Longitude"
+              type="number"
+              value={data?.lng || ''}
+              onChange={(e) => onChange({ ...data, lng: e.target.value })}
+              fullWidth
+            />
+          </Stack>
+    
+          {data?.address && (
+            <Typography
+              variant="body2" 
+              color="text.secondary"
+              sx={{
+                mt: 1,
+                p: 1.5,
+                borderRadius: 1,
+                bgcolor: (theme) => alpha(theme.palette.background.paper, 0.5)
+              }}
+            >
+              📍 {data?.address || 'No location selected'}
+            </Typography>
+          )}
+        </Stack>
+      );
+    };
 
 const StyledInput = styled(TextField)(({ theme }) => ({
     '.MuiOutlinedInput-root': {
