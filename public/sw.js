@@ -6,12 +6,9 @@ const urlsToCache = [
   '/assets/favicon.ico',
   '/assets/android-chrome-192x192.png',
   '/assets/android-chrome-512x512.png',
-  '/src/main.jsx',
-  '/src/App.jsx',
-  '/src/index.css',
-  '/src/App.css',
+  '/static/js/main.js',
+  '/static/css/main.css',
   'https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap',
-  'https://cartodb-basemaps-a.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png'
 ];
 
 self.addEventListener('install', (event) => {
@@ -22,37 +19,53 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    caches.keys().then((cacheNames) =>
+      Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
+          }
+        })
+      )
+    )
+  );
+  self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      caches.match('/index.html').then((response) => response || fetch(event.request))
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then((response) => {
-      if (response) return response;
-      
-      // Network request with timeout
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('timeout')), 3000);
-      });
+      if (response) {
+        return response;
+      }
 
-      return Promise.race([
-        fetch(event.request).then((response) => {
-          const responseClone = response.clone();
+      return fetch(event.request)
+        .then((networkResponse) => {
+          if (!networkResponse || networkResponse.status !== 200) {
+            return networkResponse;
+          }
+          const responseClone = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, responseClone);
           });
-          return response;
-        }),
-        timeoutPromise
-      ]).catch(() => {
-        // Return offline fallback for navigation
-        if (event.request.mode === 'navigate') {
-          return caches.match('/');
-        }
-        return new Response(JSON.stringify({ error: 'offline' }), {
-          headers: { 'Content-Type': 'application/json' }
+          return networkResponse;
+        })
+        .catch(() => {
+          if (event.request.headers.get('accept').includes('text/html')) {
+            return caches.match('/index.html');
+          }
+          return new Response(JSON.stringify({ error: 'offline' }), {
+            headers: { 'Content-Type': 'application/json' },
+          });
         });
-      });
     })
   );
 });
