@@ -56,54 +56,34 @@ export default defineConfig({
         prefer_related_applications: false
       },
       workbox: {
-        globPatterns: [
-          '**/*.{js,css,html,ico,png,svg,woff2,jpg,jpeg,json,txt}'
-        ],
-        navigateFallback: '/index.html',
-        runtimeCaching: [
-          {
-            urlPattern: ({ url }) => url.pathname.startsWith('/'),
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'app-shell',
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24 * 7 // 1 week
-              }
-            }
-          },
-          {
-            urlPattern: /\.(?:png|jpg|jpeg|svg|gif|ico)$/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'images',
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
-              }
-            }
-          },
-          {
-            urlPattern: /^https:\/\/fonts\.(?:googleapis|gstatic)\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'google-fonts',
-              expiration: {
-                maxEntries: 4,
-                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
-              }
-            }
-          }
-        ],
-        cleanupOutdatedCaches: true,
-        skipWaiting: true,
-        clientsClaim: true,
-        sourcemap: false
-      },
-      devOptions: {
-        enabled: true,
-        type: 'module'
+  navigateFallback: '/index.html',
+  runtimeCaching: [
+    {
+      urlPattern: ({ url }) => url.origin === self.origin,
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'app-shell',
+        expiration: {
+          maxEntries: 50,
+          maxAgeSeconds: 60 * 60 * 24 * 7 // 1 săptămână
+        }
       }
+    },
+    {
+      urlPattern: /\.(?:js|css|html|png|svg|ico)$/i,
+      handler: 'CacheFirst',
+      options: {
+        cacheName: 'static-resources',
+        expiration: {
+          maxEntries: 100,
+          maxAgeSeconds: 60 * 60 * 24 * 30 
+        }
+      }
+    }
+  ],
+  cleanupOutdatedCaches: true
+}
+
     })
   ],
 
