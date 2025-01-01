@@ -18,72 +18,67 @@ export default defineConfig({
       deleteOriginalAssets: false
     }),
     VitePWA({
-      registerType: 'prompt',
+      registerType: 'autoUpdate',
       injectRegister: 'auto',
-      strategies: 'generateSW',
-      includeAssets: ['**/*'],
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        cleanupOutdatedCaches: true,
+        skipWaiting: true,
+        clientsClaim: true,
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'google-fonts',
+              expiration: {
+                maxEntries: 4,
+                maxAgeSeconds: 7 * 24 * 60 * 60 // 1 week
+              }
+            }
+          },
+          {
+            urlPattern: /\.(?:png|jpg|jpeg|svg|ico)$/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'images',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 30 * 24 * 60 * 60 // 30 days
+              }
+            }
+          }
+        ]
+      },
       manifest: {
         name: 'QR Code Generator',
         short_name: 'QR Gen',
-        description: 'Advanced QR Code Generator - Works Offline',
+        description: 'Advanced QR Code Generator',
         theme_color: '#ffffff',
         background_color: '#ffffff',
         display: 'standalone',
         orientation: 'portrait',
-        categories: ['productivity', 'utilities'],
         icons: [
           {
-            src: '/assets/favicon-32x32.png',
+            src: 'assets/favicon-32x32.png',
             sizes: '32x32',
             type: 'image/png'
           },
           {
-            src: '/assets/android-chrome-192x192.png',
+            src: 'assets/android-chrome-192x192.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any maskable'
           },
           {
-            src: '/assets/android-chrome-512x512.png',
+            src: 'assets/android-chrome-512x512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable'
           }
         ],
-        start_url: 'https://qr-gen-eosin-rho.vercel.app/',
-        scope: 'https://qr-gen-eosin-rho.vercel.app/',
-        id: 'qr-gen',
-        prefer_related_applications: false
-      },
-      workbox: {
-  navigateFallback: '/index.html',
-  runtimeCaching: [
-    {
-      urlPattern: ({ url }) => url.origin === self.origin,
-      handler: 'NetworkFirst',
-      options: {
-        cacheName: 'app-shell',
-        expiration: {
-          maxEntries: 50,
-          maxAgeSeconds: 60 * 60 * 24 * 7 // 1 săptămână
-        }
+        start_url: '/'
       }
-    },
-    {
-      urlPattern: /\.(?:js|css|html|png|svg|ico)$/i,
-      handler: 'CacheFirst',
-      options: {
-        cacheName: 'static-resources',
-        expiration: {
-          maxEntries: 100,
-          maxAgeSeconds: 60 * 60 * 24 * 30 
-        }
-      }
-    }
-  ],
-  cleanupOutdatedCaches: true
-}
-
     })
   ],
 
@@ -96,9 +91,6 @@ export default defineConfig({
         drop_debugger: true,
         pure_funcs: ['console.log'],
         passes: 2
-      },
-      format: {
-        comments: false
       }
     },
     rollupOptions: {
@@ -141,35 +133,5 @@ export default defineConfig({
     open: true,
     host: true,
     cors: true
-  },
-
-  preview: {
-    port: 3000,
-    strictPort: true,
-    host: true,
-    cors: true
-  },
-
-  resolve: {
-    extensions: ['.js', '.jsx', '.json'],
-    alias: {
-      '@': '/src'
-    }
-  },
-
-  esbuild: {
-    // jsxInject: `import React from 'react'`,
-    target: 'es2015'
-  },
-
-  css: {
-    modules: {
-      localsConvention: 'camelCase'
-    },
-    preprocessorOptions: {
-      scss: {
-        additionalData: `@import "@/styles/variables.scss";`
-      }
-    }
   }
 });
