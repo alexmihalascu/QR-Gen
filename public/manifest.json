@@ -3,9 +3,11 @@
   "short_name": "QR Gen",
   "description": "Generate custom QR codes for URLs, text, Wi-Fi, vCards and more",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#1e293b",
+  "orientation": "portrait",
   "icons": [
     {
       "src": "/assets/favicon.ico",
@@ -24,6 +26,15 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "New QR Code",
+      "short_name": "New QR",
+      "description": "Create a new QR code",
+      "url": "/",
+      "icons": [{ "src": "/assets/android-chrome-192x192.png", "sizes": "192x192" }]
     }
   ]
 }

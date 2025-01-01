@@ -18,66 +18,25 @@ export default defineConfig({
       deleteOriginalAssets: false
     }),
     VitePWA({
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.js',
       registerType: 'autoUpdate',
       injectRegister: 'auto',
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-        cleanupOutdatedCaches: true,
-        skipWaiting: true,
-        clientsClaim: true,
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-            handler: 'StaleWhileRevalidate',
-            options: {
-              cacheName: 'google-fonts',
-              expiration: {
-                maxEntries: 4,
-                maxAgeSeconds: 7 * 24 * 60 * 60 // 1 week
-              }
-            }
-          },
-          {
-            urlPattern: /\.(?:png|jpg|jpeg|svg|ico)$/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'images',
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 30 * 24 * 60 * 60 // 30 days
-              }
-            }
-          }
-        ]
+      devOptions: {
+        enabled: true,
+        type: 'module'
       },
-      manifest: {
-        name: 'QR Code Generator',
-        short_name: 'QR Gen',
-        description: 'Advanced QR Code Generator',
-        theme_color: '#ffffff',
-        background_color: '#ffffff',
-        display: 'standalone',
-        orientation: 'portrait',
-        icons: [
-          {
-            src: 'assets/favicon-32x32.png',
-            sizes: '32x32',
-            type: 'image/png'
-          },
-          {
-            src: 'assets/android-chrome-192x192.png',
-            sizes: '192x192',
-            type: 'image/png',
-            purpose: 'any maskable'
-          },
-          {
-            src: 'assets/android-chrome-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any maskable'
-          }
+      manifest: false, // Use the manifest.json from public directory
+      injectManifest: {
+        injectionPoint: 'self.__WB_MANIFEST',
+        rollupFormat: 'iife',
+        maximumFileSizeToCacheInBytes: 5000000,
+        globDirectory: 'dist',
+        globPatterns: [
+          '**/*.{js,css,html,ico,png,svg,jpg,jpeg,json,woff2}',
+          'assets/**/*'
         ],
-        start_url: '/'
       }
     })
   ],

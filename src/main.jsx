@@ -16,6 +16,18 @@ if ('serviceWorker' in navigator) {
         scope: '/',
         updateViaCache: 'none'
       });
+
+      registration.addEventListener('updatefound', () => {
+        const newWorker = registration.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            if (window.confirm('New version available! Would you like to update?')) {
+              window.location.reload();
+            }
+          }
+        });
+      });
+
       console.log('SW registered:', registration);
     } catch (error) {
       console.error('SW registration failed:', error);

@@ -32,26 +32,7 @@ const ColorInput = styled('input')(({ theme }) => ({
       outline: `2px solid ${theme.palette.primary.main}`,
       outlineOffset: 2,
     }
-  }));
-  
-  const StyledTextField = styled(TextField)(({ theme }) => ({
-    '.MuiOutlinedInput-root': {
-      backgroundColor: alpha(theme.palette.background.paper, 0.8),
-      backdropFilter: 'blur(8px)',
-      transition: theme.transitions.create([
-        'background-color',
-        'box-shadow',
-        'border-color'
-      ]),
-      '&:hover': {
-        backgroundColor: theme.palette.background.paper,
-      },
-      '&.Mui-focused': {
-        backgroundColor: theme.palette.background.paper,
-        boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.25)}`,
-      }
-    }
-  }));
+}));
 
 const StyledTextField = styled(TextField)(({ theme }) => ({
   '.MuiOutlinedInput-root': {
@@ -100,7 +81,6 @@ const ColorPicker = ({ label, color, onChange }) => {
         alignItems: 'center',
         '& > *': { borderRadius: theme.shape.borderRadius }
       }}>
-        
         <ColorInput
           type="color"
           value={color}
