@@ -22,7 +22,6 @@ import {
 } from '@mui/icons-material';
 import { debounce } from 'lodash';
 
-// Styled Components
 const ControlPanel = styled(motion.div)(({ theme }) => ({
   contain: 'content',
   contentVisibility: 'auto',
@@ -36,25 +35,37 @@ const ControlPanel = styled(motion.div)(({ theme }) => ({
   boxShadow: theme.palette.mode === 'dark'
     ? '0 8px 32px rgba(0, 0, 0, 0.3)'
     : '0 8px 32px rgba(0, 0, 0, 0.1)',
+  '@supports not (backdrop-filter: blur(12px))': {
+    background: theme.palette.mode === 'dark'
+      ? theme.palette.background.paper
+      : theme.palette.background.paper,
+  }
 }));
 
 const StyledHeading = styled(Typography)(({ theme }) => ({
   fontWeight: 700,
   fontSize: '1.5rem',
-  background: theme.palette.mode === 'dark'
-    ? `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`
-    : `linear-gradient(45deg, ${theme.palette.primary.light}, ${theme.palette.primary.main})`,
-  backgroundClip: 'text',
-  WebkitBackgroundClip: 'text',
-  WebkitTextFillColor: 'transparent',
-  willChange: 'transform',
-  transform: 'translateZ(0)',
-  contain: 'content',
-  fontFamily: theme.typography.fontFamily,
-  letterSpacing: '-0.01em',
-  transition: theme.transitions.create(['background-image', 'color'], {
-    duration: theme.transitions.duration.standard,
-  }),
+  color: theme.palette.primary.main,
+  '@supports (background-clip: text) or (-webkit-background-clip: text)': {
+    background: theme.palette.mode === 'dark'
+      ? `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`
+      : `linear-gradient(45deg, ${theme.palette.primary.light}, ${theme.palette.primary.main})`,
+    backgroundClip: 'text',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    '@media (prefers-reduced-motion: no-preference)': {
+      transition: theme.transitions.create(['background-image', 'color'], {
+        duration: theme.transitions.duration.standard,
+      }),
+    }
+  },
+  '@media (max-width: 600px)': {
+    background: 'none',
+    WebkitBackgroundClip: 'initial',
+    WebkitTextFillColor: 'initial',
+    color: theme.palette.primary.main,
+  },
+  contain: 'paint',
 }));
 
 const ColorButton = styled(IconButton)(({ theme, color }) => ({
@@ -63,11 +74,17 @@ const ColorButton = styled(IconButton)(({ theme, color }) => ({
   border: `2px solid ${theme.palette.background.paper}`,
   boxShadow: theme.shadows[2],
   background: color,
-  transition: theme.transitions.create(['transform', 'box-shadow']),
+  transition: theme.transitions.create(['transform', 'box-shadow'], {
+    duration: theme.transitions.duration.short,
+  }),
   '&:hover': {
     transform: 'scale(1.1)',
     boxShadow: theme.shadows[4],
   },
+  '@media (max-width: 600px)': {
+    width: 36,
+    height: 36,
+  }
 }));
 
 const StyledSlider = styled(Slider)(({ theme }) => ({
@@ -88,6 +105,10 @@ const StyledSlider = styled(Slider)(({ theme }) => ({
     '&:before': {
       display: 'none',
     },
+    '@media (max-width: 600px)': {
+      height: 20,
+      width: 20,
+    }
   },
   '& .MuiSlider-rail': {
     opacity: 0.32,
@@ -95,15 +116,39 @@ const StyledSlider = styled(Slider)(({ theme }) => ({
       ? theme.palette.grey[700]
       : theme.palette.grey[300],
   },
+  '@media (max-width: 600px)': {
+    height: 6,
+  }
+}));
+
+const StyledPopover = styled(Popover)(({ theme }) => ({
+  '& .MuiPaper-root': {
+    padding: theme.spacing(3),
+    width: 280,
+    backdropFilter: 'blur(12px)',
+    backgroundColor: alpha(theme.palette.background.paper, 0.95),
+    boxShadow: theme.shadows[8],
+    '@media (max-width: 600px)': {
+      width: 260,
+      padding: theme.spacing(2),
+    },
+    '@supports not (backdrop-filter: blur(12px))': {
+      backgroundColor: theme.palette.background.paper,
+    }
+  }
 }));
 
 const luminance = (hex) => {
   if (hex === 'transparent') return 0;
-  const rgb = parseInt(hex.slice(1), 16);
-  const r = (rgb >> 16) & 0xff;
-  const g = (rgb >> 8) & 0xff;
-  const b = (rgb >> 0) & 0xff;
-  return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  try {
+    const rgb = parseInt(hex.slice(1), 16);
+    const r = (rgb >> 16) & 0xff;
+    const g = (rgb >> 8) & 0xff;
+    const b = (rgb >> 0) & 0xff;
+    return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  } catch {
+    return 0;
+  }
 };
 
 const QRControls = memo(({ options, onChange, qrRef, qrData }) => {
@@ -144,16 +189,12 @@ const QRControls = memo(({ options, onChange, qrRef, qrData }) => {
 
   return (
     <ControlPanel
-      initial={{ opacity: 0, y: 20 }}
+      initial={isMobile ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: isMobile ? 0 : 0.3 }}
     >
-      <Stack spacing={4}>
-        <StyledHeading
-          component="h2"
-          variant="h2"
-          fetchpriority="high"
-        >
+      <Stack spacing={isMobile ? 3 : 4}>
+        <StyledHeading component="h2" variant="h2">
           Customize QR Code
         </StyledHeading>
 
@@ -172,11 +213,11 @@ const QRControls = memo(({ options, onChange, qrRef, qrData }) => {
               <span>
                 <IconButton 
                   aria-label="Decrease QR code size"
-                  size="small"
+                  size={isMobile ? "small" : "medium"}
                   onClick={() => handleZoom('out')}
                   disabled={localOptions.size <= 128}
                 >
-                  <ZoomOut />
+                  <ZoomOut fontSize={isMobile ? "small" : "medium"} />
                 </IconButton>
               </span>
             </Tooltip>
@@ -190,7 +231,7 @@ const QRControls = memo(({ options, onChange, qrRef, qrData }) => {
               onChange={(_, value) => handleOptionChange({ size: value })}
               valueLabelDisplay="auto"
               valueLabelFormat={(value) => `${value}px`}
-              marks={[
+              marks={isMobile ? undefined : [
                 { value: 128, label: '128px' },
                 { value: 512, label: '512px' },
                 { value: 1024, label: '1024px' }
@@ -200,11 +241,11 @@ const QRControls = memo(({ options, onChange, qrRef, qrData }) => {
               <span>
                 <IconButton
                   aria-label="Increase QR code size" 
-                  size="small"
+                  size={isMobile ? "small" : "medium"}
                   onClick={() => handleZoom('in')}
                   disabled={localOptions.size >= 1024}
                 >
-                  <ZoomIn />
+                  <ZoomIn fontSize={isMobile ? "small" : "medium"} />
                 </IconButton>
               </span>
             </Tooltip>
@@ -230,7 +271,9 @@ const QRControls = memo(({ options, onChange, qrRef, qrData }) => {
                   aria-label="Change QR code color"
                   aria-describedby="color-picker-label"
                 >
-                  <Palette sx={{ color: luminance(localOptions.fgColor) > 0.5 ? '#000' : '#fff' }} />
+                  <Palette fontSize={isMobile ? "small" : "medium"} sx={{ 
+                    color: luminance(localOptions.fgColor) > 0.5 ? '#000' : '#fff' 
+                  }} />
                 </ColorButton>
               </span>
             </Tooltip>
@@ -248,12 +291,15 @@ const QRControls = memo(({ options, onChange, qrRef, qrData }) => {
                         : localOptions.bgColor,
                     }}
                   >
-                    <Palette sx={{ color: luminance(localOptions.bgColor) > 0.5 ? '#000' : '#fff' }} />
+                    <Palette fontSize={isMobile ? "small" : "medium"} sx={{ 
+                      color: luminance(localOptions.bgColor) > 0.5 ? '#000' : '#fff' 
+                    }} />
                   </ColorButton>
                 </span>
               </Tooltip>
               <Tooltip title={localOptions.bgColor === 'transparent' ? 'Make background solid' : 'Make background transparent'}>
                 <IconButton
+                  size={isMobile ? "small" : "medium"}
                   onClick={() => handleOptionChange({ 
                     bgColor: localOptions.bgColor === 'transparent' ? '#ffffff' : 'transparent' 
                   })}
@@ -277,30 +323,19 @@ const QRControls = memo(({ options, onChange, qrRef, qrData }) => {
                     }
                   }}
                 >
-                  <Opacity />
+                  <Opacity fontSize={isMobile ? "small" : "medium"} />
                 </IconButton>
               </Tooltip>
             </Stack>
           </Stack>
         </Box>
 
-        <Popover
+        <StyledPopover
           open={Boolean(colorAnchor)}
           anchorEl={colorAnchor}
           onClose={() => setColorAnchor(null)}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
           transformOrigin={{ vertical: 'top', horizontal: 'center' }}
-          slotProps={{
-            paper: {
-              sx: {
-                p: 3,
-                width: 280,
-                backdropFilter: 'blur(12px)',
-                bgcolor: alpha(theme.palette.background.paper, 0.95),
-                boxShadow: theme.shadows[8]
-              }
-            }
-          }}
         >
           <Stack spacing={2.5}>
             <Typography variant="subtitle2" sx={{ color: 'text.primary' }}>
@@ -343,7 +378,7 @@ const QRControls = memo(({ options, onChange, qrRef, qrData }) => {
               })}
             />
           </Stack>
-        </Popover>
+        </StyledPopover>
       </Stack>
     </ControlPanel>
   );
