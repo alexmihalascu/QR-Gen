@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, memo } from 'react';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import {
@@ -22,7 +22,11 @@ import {
 } from '@mui/icons-material';
 import { debounce } from 'lodash';
 
+// Styled Components
 const ControlPanel = styled(motion.div)(({ theme }) => ({
+  contain: 'content',
+  contentVisibility: 'auto',
+  containIntrinsicSize: '0 500px',
   background: theme.palette.mode === 'dark'
     ? alpha(theme.palette.background.paper, 0.85)
     : alpha(theme.palette.background.paper, 0.9),
@@ -32,6 +36,25 @@ const ControlPanel = styled(motion.div)(({ theme }) => ({
   boxShadow: theme.palette.mode === 'dark'
     ? '0 8px 32px rgba(0, 0, 0, 0.3)'
     : '0 8px 32px rgba(0, 0, 0, 0.1)',
+}));
+
+const StyledHeading = styled(Typography)(({ theme }) => ({
+  fontWeight: 700,
+  fontSize: '1.5rem',
+  background: theme.palette.mode === 'dark'
+    ? `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`
+    : `linear-gradient(45deg, ${theme.palette.primary.light}, ${theme.palette.primary.main})`,
+  backgroundClip: 'text',
+  WebkitBackgroundClip: 'text',
+  WebkitTextFillColor: 'transparent',
+  willChange: 'transform',
+  transform: 'translateZ(0)',
+  contain: 'content',
+  fontFamily: theme.typography.fontFamily,
+  letterSpacing: '-0.01em',
+  transition: theme.transitions.create(['background-image', 'color'], {
+    duration: theme.transitions.duration.standard,
+  }),
 }));
 
 const ColorButton = styled(IconButton)(({ theme, color }) => ({
@@ -75,6 +98,7 @@ const StyledSlider = styled(Slider)(({ theme }) => ({
 }));
 
 const luminance = (hex) => {
+  if (hex === 'transparent') return 0;
   const rgb = parseInt(hex.slice(1), 16);
   const r = (rgb >> 16) & 0xff;
   const g = (rgb >> 8) & 0xff;
@@ -82,7 +106,7 @@ const luminance = (hex) => {
   return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
 };
 
-const QRControls = ({ options, onChange, qrRef, qrData }) => {
+const QRControls = memo(({ options, onChange, qrRef, qrData }) => {
   const [colorAnchor, setColorAnchor] = useState(null);
   const [activeColor, setActiveColor] = useState(null);
   const [localOptions, setLocalOptions] = useState(options);
@@ -93,30 +117,30 @@ const QRControls = ({ options, onChange, qrRef, qrData }) => {
     debounce((newOptions) => {
       onChange(newOptions);
     }, 100),
-    []
+    [onChange]
   );
 
   React.useEffect(() => {
     setLocalOptions(options);
   }, [options]);
 
-  const handleOptionChange = (newOptions) => {
+  const handleOptionChange = useCallback((newOptions) => {
     const updatedOptions = { ...localOptions, ...newOptions };
     setLocalOptions(updatedOptions);
     debouncedOnChange(updatedOptions);
-  };
+  }, [localOptions, debouncedOnChange]);
 
-  const handleColorClick = (event, type) => {
+  const handleColorClick = useCallback((event, type) => {
     setColorAnchor(event.currentTarget);
     setActiveColor(type);
-  };
+  }, []);
 
-  const handleZoom = (direction) => {
+  const handleZoom = useCallback((direction) => {
     const newSize = direction === 'in' 
       ? Math.min(localOptions.size + 32, 1024)
       : Math.max(localOptions.size - 32, 128);
     handleOptionChange({ size: newSize });
-  };
+  }, [localOptions.size, handleOptionChange]);
 
   return (
     <ControlPanel
@@ -125,85 +149,78 @@ const QRControls = ({ options, onChange, qrRef, qrData }) => {
       transition={{ duration: 0.3 }}
     >
       <Stack spacing={4}>
-      <Typography 
-        variant="h2" 
-        component="h2"
-        sx={{ 
-          fontWeight: 700,
-          fontSize: '1.5rem', // Keep same visual size as before
-          background: 'linear-gradient(45deg, #2196f3, #1976d2)',
-          backgroundClip: 'text',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-        }}
-      >
-        Customize QR Code
-      </Typography>
+        <StyledHeading
+          component="h2"
+          variant="h2"
+          fetchpriority="high"
+        >
+          Customize QR Code
+        </StyledHeading>
 
         <Box>
-        <Typography 
-          id="size-slider-label" 
-          variant="h3"
-          component="h3"
-          mb={2}
-          sx={{ fontSize: '1rem' }} // Keep same visual size
-        >
-          Size: {localOptions.size}px
-        </Typography>
-        <Stack direction="row" spacing={2} alignItems="center">
-          <Tooltip title="Decrease size">
-            <span>
-              <IconButton 
-                aria-label="Decrease QR code size"
-                size="small"
-                onClick={() => handleZoom('out')}
-                disabled={localOptions.size <= 128}
-              >
-                <ZoomOut />
-              </IconButton>
-            </span>
-          </Tooltip>
-          <StyledSlider
-            id="size-slider"
-            aria-labelledby="size-slider-label"
-            value={localOptions.size}
-            min={128}
-            max={1024}
-            step={32}
-            onChange={(_, value) => handleOptionChange({ size: value })}
-            valueLabelDisplay="auto"
-            valueLabelFormat={(value) => `${value}px`}
-            marks={[
-              { value: 128, label: '128px' },
-              { value: 512, label: '512px' },
-              { value: 1024, label: '1024px' }
-            ]}
-          />
-          <Tooltip title="Increase size">
-            <span>
-              <IconButton
-                aria-label="Increase QR code size" 
-                size="small"
-                onClick={() => handleZoom('in')}
-                disabled={localOptions.size >= 512}
-              >
-                <ZoomIn />
-              </IconButton>
-            </span>
-          </Tooltip>
-        </Stack>
-      </Box>
+          <Typography 
+            id="size-slider-label" 
+            variant="h3"
+            component="h3"
+            mb={2}
+            sx={{ fontSize: '1rem' }}
+          >
+            Size: {localOptions.size}px
+          </Typography>
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Tooltip title="Decrease size">
+              <span>
+                <IconButton 
+                  aria-label="Decrease QR code size"
+                  size="small"
+                  onClick={() => handleZoom('out')}
+                  disabled={localOptions.size <= 128}
+                >
+                  <ZoomOut />
+                </IconButton>
+              </span>
+            </Tooltip>
+            <StyledSlider
+              id="size-slider"
+              aria-labelledby="size-slider-label"
+              value={localOptions.size}
+              min={128}
+              max={1024}
+              step={32}
+              onChange={(_, value) => handleOptionChange({ size: value })}
+              valueLabelDisplay="auto"
+              valueLabelFormat={(value) => `${value}px`}
+              marks={[
+                { value: 128, label: '128px' },
+                { value: 512, label: '512px' },
+                { value: 1024, label: '1024px' }
+              ]}
+            />
+            <Tooltip title="Increase size">
+              <span>
+                <IconButton
+                  aria-label="Increase QR code size" 
+                  size="small"
+                  onClick={() => handleZoom('in')}
+                  disabled={localOptions.size >= 1024}
+                >
+                  <ZoomIn />
+                </IconButton>
+              </span>
+            </Tooltip>
+          </Stack>
+        </Box>
 
-      <Box>
-      <Typography 
-        id="color-picker-label"
-        variant="h3" 
-        component="h3"
-        mb={2}
-        sx={{ fontSize: '1rem' }} // Keep same visual size
-      >
-        Colors
-      </Typography>
+        <Box>
+          <Typography 
+            id="color-picker-label"
+            variant="h3" 
+            component="h3"
+            mb={2}
+            sx={{ fontSize: '1rem' }}
+          >
+            Colors
+          </Typography>
           <Stack direction="row" spacing={2}>
             <Tooltip title="Change QR code color">
               <span>
@@ -218,23 +235,23 @@ const QRControls = ({ options, onChange, qrRef, qrData }) => {
               </span>
             </Tooltip>
             <Stack direction="row" spacing={1}>
-            <Tooltip title="Change background color">
-            <span>
-                <ColorButton
-                color={localOptions.bgColor}
-                onClick={(e) => handleColorClick(e, 'bg')}
-                aria-label="Background color"
-                sx={{ 
-                    opacity: localOptions.bgColor === 'transparent' ? 0.5 : 1,
-                    background: localOptions.bgColor === 'transparent' 
-                    ? 'repeating-conic-gradient(#808080 0% 25%, transparent 0% 50%) 50% / 8px 8px'
-                    : localOptions.bgColor,
-                }}
-                >
-                <Palette sx={{ color: luminance(localOptions.bgColor) > 0.5 ? '#000' : '#fff' }} />
-                </ColorButton>
-            </span>
-            </Tooltip>
+              <Tooltip title="Change background color">
+                <span>
+                  <ColorButton
+                    color={localOptions.bgColor}
+                    onClick={(e) => handleColorClick(e, 'bg')}
+                    aria-label="Background color"
+                    sx={{ 
+                      opacity: localOptions.bgColor === 'transparent' ? 0.5 : 1,
+                      background: localOptions.bgColor === 'transparent' 
+                        ? 'repeating-conic-gradient(#808080 0% 25%, transparent 0% 50%) 50% / 8px 8px'
+                        : localOptions.bgColor,
+                    }}
+                  >
+                    <Palette sx={{ color: luminance(localOptions.bgColor) > 0.5 ? '#000' : '#fff' }} />
+                  </ColorButton>
+                </span>
+              </Tooltip>
               <Tooltip title={localOptions.bgColor === 'transparent' ? 'Make background solid' : 'Make background transparent'}>
                 <IconButton
                   onClick={() => handleOptionChange({ 
@@ -318,18 +335,20 @@ const QRControls = ({ options, onChange, qrRef, qrData }) => {
               </Box>
             )}
             <HexColorPicker
-            id="hex-color-picker"
-            aria-label={`${activeColor === 'fg' ? 'QR Code' : 'Background'} color picker`}
-            color={activeColor === 'fg' ? localOptions.fgColor : localOptions.bgColor}
-            onChange={(color) => handleOptionChange({ 
-              [activeColor === 'fg' ? 'fgColor' : 'bgColor']: color 
-            })}
-          />
+              id="hex-color-picker"
+              aria-label={`${activeColor === 'fg' ? 'QR Code' : 'Background'} color picker`}
+              color={activeColor === 'fg' ? localOptions.fgColor : localOptions.bgColor}
+              onChange={(color) => handleOptionChange({ 
+                [activeColor === 'fg' ? 'fgColor' : 'bgColor']: color 
+              })}
+            />
           </Stack>
         </Popover>
       </Stack>
     </ControlPanel>
   );
-};
+});
+
+QRControls.displayName = 'QRControls';
 
 export default QRControls;
