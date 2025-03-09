@@ -1,110 +1,203 @@
-import React from 'react';
-import { Box, Typography, Link, Container, Stack, IconButton, useTheme, alpha } from '@mui/material';
 import { GitHub, LinkedIn } from '@mui/icons-material';
-import styled from '@emotion/styled';
+import {
+  alpha,
+  Box,
+  Container,
+  IconButton,
+  Link,
+  Stack,
+  Typography,
+  useTheme,
+} from '@mui/material';
+import { styled } from '@mui/material/styles';
+import { motion } from 'framer-motion';
+import React from 'react';
 
 const FooterLink = styled(Link)(({ theme }) => ({
   color: theme.palette.text.secondary,
   textDecoration: 'none',
-  transition: theme.transitions.create(['color', 'transform']),
+  transition: theme.transitions.create(['color', 'transform'], {
+    duration: 0.3,
+  }),
+  position: 'relative',
   '&:hover': {
     color: theme.palette.primary.main,
-  }
+  },
+  '&::after': {
+    content: '""',
+    position: 'absolute',
+    width: '0%',
+    height: '2px',
+    bottom: '-4px',
+    left: '0',
+    backgroundColor: theme.palette.primary.main,
+    transition: theme.transitions.create('width', {
+      duration: 0.3,
+    }),
+  },
+  '&:hover::after': {
+    width: '100%',
+  },
 }));
 
 const SocialButton = styled(IconButton)(({ theme }) => ({
   color: theme.palette.text.secondary,
-  transition: theme.transitions.create(['transform', 'color', 'background']),
+  backgroundColor: alpha(theme.palette.primary.main, 0.05),
+  borderRadius: '12px',
+  padding: '8px',
+  transition: theme.transitions.create(['transform', 'color', 'background', 'box-shadow'], {
+    duration: 0.3,
+  }),
   '&:hover': {
-    transform: 'translateY(-2px)',
+    transform: 'translateY(-4px)',
     color: theme.palette.primary.main,
-    background: alpha(theme.palette.primary.main, 0.1)
-  }
+    backgroundColor: alpha(theme.palette.primary.main, 0.15),
+    boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.2)}`,
+  },
+}));
+
+const HeartIcon = styled(motion.span)({
+  display: 'inline-block',
+  transform: 'translateY(1px)',
+});
+
+const FooterContainer = styled(Box)(({ theme }) => ({
+  background:
+    theme.palette.mode === 'dark'
+      ? `linear-gradient(to bottom, ${alpha(theme.palette.background.paper, 0)}, ${alpha(
+          theme.palette.background.paper,
+          0.95
+        )})`
+      : `linear-gradient(to bottom, ${alpha(theme.palette.background.paper, 0)}, ${alpha(
+          theme.palette.background.paper,
+          0.9
+        )})`,
+  backdropFilter: 'blur(10px)',
+  borderTop: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
+  position: 'relative',
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '1px',
+    background: `linear-gradient(90deg, ${alpha(theme.palette.primary.main, 0)} 0%, ${alpha(
+      theme.palette.primary.main,
+      0.3
+    )} 50%, ${alpha(theme.palette.primary.main, 0)} 100%)`,
+  },
 }));
 
 const Footer = () => {
   const theme = useTheme();
-  
+  const currentYear = new Date().getFullYear();
+
   return (
-    <Box
+    <FooterContainer
       component="footer"
       sx={{
-        py: 3,
+        py: { xs: 4, md: 5 },
         px: 2,
         mt: 'auto',
-        background: theme.palette.mode === 'dark'
-          ? `linear-gradient(to bottom, ${alpha(theme.palette.background.paper, 0)}, ${alpha(theme.palette.background.paper, 0.8)})`
-          : `linear-gradient(to bottom, ${alpha(theme.palette.background.paper, 0)}, ${alpha(theme.palette.background.paper, 0.8)})`,
-        backdropFilter: 'blur(8px)',
       }}
     >
-      <Container maxWidth="sm">
-        <Stack spacing={2} alignItems="center">
-          <Stack 
-            direction="row" 
-            spacing={1} 
-            alignItems="center"
-            divider={
-              <Box 
-                sx={{ 
-                  width: '4px', 
-                  height: '4px', 
-                  borderRadius: '50%',
-                  bgcolor: 'text.disabled' 
-                }} 
-              />
-            }
+      <Container maxWidth="md">
+        <Stack spacing={4} alignItems="center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            viewport={{ once: true }}
           >
-            <Typography variant="body2" color="text.secondary">
-              {'© '}
-              <FooterLink href="/">
-                QR Code Generator
-              </FooterLink>
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {new Date().getFullYear()}
-            </Typography>
-          </Stack>
-          
-          <Typography variant="body2" color="text.secondary" align="center">
-            Made with ❤️ by{' '}
-            <FooterLink 
-              href="https://alexandrumihalascu.tech" 
-              target="_blank"
-              rel="noopener noreferrer"
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              align="center"
+              sx={{
+                fontSize: { xs: '0.85rem', sm: '0.9rem' },
+                letterSpacing: '0.2px',
+                lineHeight: 1.6,
+              }}
             >
-              Alexandru Mihalașcu
-            </FooterLink>
-          </Typography>
-
-          <Stack direction="row" spacing={1}>
-            <SocialButton 
-              href="https://github.com/alexmihalascu" 
-              target="_blank"
-              rel="noopener noreferrer"
-              size="small"
-            >
-              <GitHub fontSize="small" />
-              <Typography 
-                variant="srOnly" 
-                sx={{ 
-                  position: 'absolute',
-                  width: '1px',
-                  height: '1px',
-                  padding: 0,
-                  margin: '-1px',
-                  overflow: 'hidden',
-                  clip: 'rect(0,0,0,0)',
-                  border: 0
+              Made with{' '}
+              <HeartIcon
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{
+                  duration: 1.2,
+                  repeat: Infinity,
+                  repeatType: 'loop',
                 }}
               >
-                GitHub Profile
-              </Typography>
-            </SocialButton>
-          </Stack>
+                ❤️
+              </HeartIcon>{' '}
+              by{' '}
+              <FooterLink
+                href="https://mhlsq.ro"
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{
+                  fontWeight: 600,
+                  background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  '&::after': {
+                    background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                  },
+                }}
+              >
+                MHLSQ SOFTWARE
+              </FooterLink>
+            </Typography>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            viewport={{ once: true }}
+          >
+            <Stack direction="row" spacing={2}>
+              <SocialButton
+                href="https://github.com/alexmihalascu"
+                target="_blank"
+                rel="noopener noreferrer"
+                component={motion.button}
+                whileHover={{ rotate: [0, -10, 10, 0] }}
+                transition={{ duration: 0.5 }}
+              >
+                <GitHub fontSize="small" />
+              </SocialButton>
+              <SocialButton
+                href="https://linkedin.com/in/alexandrumihalascu"
+                target="_blank"
+                rel="noopener noreferrer"
+                component={motion.button}
+                whileHover={{ rotate: [0, -10, 10, 0] }}
+                transition={{ duration: 0.5 }}
+              >
+                <LinkedIn fontSize="small" />
+              </SocialButton>
+            </Stack>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            viewport={{ once: true }}
+          >
+            <Typography
+              variant="caption"
+              color="text.disabled"
+              sx={{ fontWeight: 400, letterSpacing: '0.4px' }}
+            >
+              © {currentYear} QRGenerator. All rights reserved.
+            </Typography>
+          </motion.div>
         </Stack>
       </Container>
-    </Box>
+    </FooterContainer>
   );
 };
 
