@@ -26,17 +26,17 @@ const StyledAppBar = styled(AppBar)(({ theme, scrolled }) => ({
     theme.palette.mode === 'dark'
       ? `linear-gradient(to bottom, ${alpha(
           theme.palette.background.paper,
-          scrolled ? 0.95 : 0.85
+          scrolled ? 0.95 : 0
         )}, ${alpha(theme.palette.background.paper, scrolled ? 0.9 : 0.75)})`
       : `linear-gradient(to bottom, ${alpha(
           theme.palette.background.paper,
-          scrolled ? 0.98 : 0.95
+          scrolled ? 0.98 : 0
         )}, ${alpha(theme.palette.background.paper, scrolled ? 0.95 : 0.85)})`,
   backdropFilter: 'blur(20px)',
   boxShadow: scrolled
     ? `0 4px 20px ${alpha(theme.palette.mode === 'dark' ? '#000' : '#718096', 0.1)}`
     : 'none',
-  borderBottom: `1px solid ${alpha(theme.palette.divider, scrolled ? 0.08 : 0.05)}`,
+  borderBottom: scrolled ? `1px solid ${alpha(theme.palette.divider, 0.08)}` : 'none',
   transition: theme.transitions.create(['background', 'box-shadow', 'border-bottom'], {
     duration: theme.transitions.duration.standard,
   }),
@@ -107,9 +107,10 @@ const Header = () => {
 
   return (
     <StyledAppBar
-      position="sticky"
+      position="fixed" // Changed from "sticky" to "fixed" for better page integration
       component={motion.nav}
       scrolled={scrolled ? 1 : 0}
+      elevation={0} // Ensures no default shadow
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       transition={{
@@ -209,23 +210,6 @@ const Header = () => {
           </LogoSection>
 
           <Stack direction="row" spacing={2} alignItems="center">
-            {/* <IconButton
-              sx={{
-                backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                color: theme.palette.primary.main,
-                borderRadius: '12px',
-                p: { xs: 0.8, sm: 1 },
-                display: { xs: 'none', sm: 'flex' },
-                '&:hover': {
-                  backgroundColor: alpha(theme.palette.primary.main, 0.15),
-                },
-              }}
-              component={motion.button}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <QrCodeScannerIcon fontSize={isMobile ? 'small' : 'medium'} />
-            </IconButton> */}
             <ThemeToggle />
           </Stack>
         </Toolbar>

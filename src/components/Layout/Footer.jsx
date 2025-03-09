@@ -73,20 +73,9 @@ const FooterContainer = styled(Box)(({ theme }) => ({
           0.9
         )})`,
   backdropFilter: 'blur(10px)',
-  borderTop: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
+  // Removed the borderTop property
   position: 'relative',
-  '&::before': {
-    content: '""',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: '1px',
-    background: `linear-gradient(90deg, ${alpha(theme.palette.primary.main, 0)} 0%, ${alpha(
-      theme.palette.primary.main,
-      0.3
-    )} 50%, ${alpha(theme.palette.primary.main, 0)} 100%)`,
-  },
+  // Removed the ::before pseudo-element with the top line
 }));
 
 const Footer = () => {
